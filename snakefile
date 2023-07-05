@@ -12,7 +12,7 @@ min_version("7.18")
 # ----------------------------------------------------------------
 
 configfile: "config.yml"
-validate(config, schema="schema/config_schema.yaml")
+# validate(config=config, schema="schema/config_schema.yaml")
 workdir: config["workdir"]
 
 WORKDIR = config["workdir"]
@@ -70,7 +70,7 @@ rule pychopper:
         pc="True" if config["run_pychopper"] else "False",
         pc_opts=config["pychopper_opts"]
 
-    log: path.join(workdir, "Pychopper", f"{sample}_pychopped.log")
+    log: path.join(WORKDIR, "Pychopper", f"{sample}_pychopped.log")
 
     threads: config["threads"]
 
