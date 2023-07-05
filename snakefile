@@ -7,7 +7,7 @@ from pathlib import Path
 
 from snakemake.utils import validate
 from snakemake.utils import min_version
-min_version("5.3")
+min_version("7.18")
 
 # ----------------------------------------------------------------
 
@@ -41,9 +41,7 @@ rule all:
         target_list
 
 
-#########################################################################
-
-
+# ----------------------------------------------------------------
 
 rule nanostat:
     input:
@@ -60,27 +58,41 @@ rule nanostat:
         """
 
 
+# ----------------------------------------------------------------
+
 rule pychopper:
     input:
         fq = config["reads_fastq"]
 
     output:
-        pyfq = "Pychopper/" + sample + "_pychopped.fastq"
+        pyfq = "Pychopper/" + sample + "_full_length_reads.fastq"
 
     params:
         outpath = "Pychopper",
-        prefix = sample + "_pychopped.fastq"
+        prefix = sample + "_full_length_reads.fastq",
+        pc = "True" if config["run_pychopper"] else "False",
+        pc_opts = config["pychopper_opts"]
 
     log: WORKDIR + "/Pychopper/" + sample + "_pychopped.log"
 
     threads: config["threads"]
 
-    shell:
-        """
-        cd {params.outpath};
-        (cdna_classifier.py -x DCS109 -t {threads} -r report.pdf -u unclassified.fq -w rescued.fq {input.fq} {params.prefix}) 2> {log}
-        """
+    run:
+        if params.pc == "True":
+            shell(
+                """
+                cd {params.outpath};
+                pychopper {params.pc_opts} -t {threads} -r report.pdf -u unclassified.fq -w rescued.fq {input.fq} {params.prefix} 2> {log}
+                """
+            )
+        else:
+            shell(
+                """
+                ln -s `realpath {input.fq}` {output.pyfq}
+                """
+            )
 
+# ----------------------------------------------------------------
 
 rule minimap_mapping:
     input:
@@ -89,33 +101,33 @@ rule minimap_mapping:
 
     output:
         sam = "Mapping/" + sample + "_minimap.sam"
+    
+    params:
+        opts = config["minimap2_opts"]
 
     log: "Mapping/" + sample + "_minimap.log"
 
     threads: config["threads"]
 
-    shell:
-        """
-        (minimap2 -ax splice -uf -k14 --MD --secondary=no -t {threads} -o {output.sam} {input.genome} {input.fq}) 2> {log}
-        """
+    shell:"""
+        minimap2 -ax splice {params.opts} --secondary=no -t {threads} {input.genome} {input.fq} \
+        | samtools sort -@ {threads} -o {output.sam}
+    """
+# ----------------------------------------------------------------
 
-
-
-rule sort_sam:
+rule aln_stats:
     input:
         sam = rules.minimap_mapping.output.sam
 
     output:
-        sortedSam = "Mapping/" + sample + "_minimap.sorted.sam"
+        tsv = "Mapping/" + sample + "_alignment_stats.tsv"
 
     threads: config["threads"]
 
-    shell:
-        """
-        samtools sort -O SAM -o {output.sortedSam} -@ {threads} {input.sam}
-        """
-
-
+    shell:"""
+        samtools stats -@ {threads} {input.sam} > {output.tsv}
+    """
+# ----------------------------------------------------------------
 
 rule talon_initialize_database:
     input:
@@ -129,18 +141,17 @@ rule talon_initialize_database:
         gbuild = "hg38",
         prefix = "Talon/talon_" + Path(config["gtf"]).stem
 
-    log: "Talon/talon_db.log"
+    log: "Talon/" + sample + "_talon_db.log"
 
-    shell:
-        """
+    shell:"""
         (talon_initialize_database --f {input.gtf} --a {params.gtf_name} --g {params.gbuild} --o {params.prefix}) &> {log}
         """
 
-
+# ----------------------------------------------------------------
 
 rule talon_label_reads:
     input:
-        sam = rules.sort_sam.output.sortedSam,
+        sam = input.sam,
         fa = config["genome"]
 
     output:
@@ -149,16 +160,14 @@ rule talon_label_reads:
     params:
         prefix = "Talon/" + sample
 
-    log: "Talon/talon_labelReads.log"
+    log: "Talon/" + sample + "_talon_labelReads.log"
 
     threads: config["threads"]
 
-    shell:
-        """
+    shell:"""
         (talon_label_reads --f {input.sam} --g {input.fa} --t {threads} --deleteTmp --o {params.prefix}) &> {log}
         """
-
-
+# ----------------------------------------------------------------
 
 rule talon_annotate:
     input:
@@ -175,16 +184,15 @@ rule talon_annotate:
         description = sample + "_sam",
         gbuild = "hg38"
 
-    log: "Talon/talon_annotate.log"
+    log: "Talon/" + sample + "_talon_annotate.log"
 
     threads: config["threads"]
 
-    shell:
-        """
-        echo '{params.prefix1},{params.description},ONT-Promethian,{input.sam}' > Talon/config_file.txt &&
+    shell:"""
+        echo '{params.prefix1},{params.description},ONT,{input.sam}' > Talon/config_file.txt &&
         (talon --f Talon/config_file.txt --db {input.talon_db} --build {params.gbuild} --threads {threads} --o {params.prefix2}) &> {log}
         """
-
+# ----------------------------------------------------------------
 
 rule talon_filter_transcripts:
     input:
@@ -195,16 +203,15 @@ rule talon_filter_transcripts:
         csv = "Talon/" + sample + "_whitelist.csv"
 
     params:
-        gtf_name = Path(config["gtf"]).stem
+        gtf_name = Path(config["gtf"]).stem,
+        min_count = config["MIN_COUNT"]
 
-    log: "Talon/talon_filter.log"
+    log: "Talon/" + sample + "_talon_filter.log"
 
-    shell:
+    shell:"""
+        (talon_filter_transcripts --db {input.talon_db} -a {params.gtf_name} --maxFracA 0.5 --minCount {params.min_count} --o {output.csv}) &> {log}
         """
-        (talon_filter_transcripts --db {input.talon_db} -a {params.gtf_name} --maxFracA 0.5 --minCount 5 --o {output.csv}) &> {log}
-        """
-
-
+# ----------------------------------------------------------------
 
 rule talon_abundance:
     input:
@@ -219,14 +226,12 @@ rule talon_abundance:
         gbuild = "hg38",
         prefix = "Talon/" + sample
 
-    log: "Talon/talon_abundance.log"
+    log: "Talon/" + sample + "_talon_abundance.log"
 
-    shell:
-        """
+    shell:"""
         (talon_abundance --db {input.talon_db} -a {params.gtf_name} --build {params.gbuild} --whitelist {input.whitelist} --o {params.prefix}) &> {log}
         """
-
-
+# ----------------------------------------------------------------
 
 rule talon_create_GTF:
     input:
@@ -241,9 +246,8 @@ rule talon_create_GTF:
         gbuild = "hg38",
         prefix = "Talon/" + sample
 
-    log: "Talon/talon_gtf.log"
+    log: "Talon/" + sample + "_talon_gtf.log"
 
-    shell:
-        """
+    shell:"""
         (talon_create_GTF --db {input.talon_db} -a {params.gtf_name} --build {params.gbuild} --whitelist {input.whitelist} --o {params.prefix}) &> {log}
         """

@@ -13,6 +13,9 @@ genome: ""
 # ONT reads in fastq format
 reads_fastq: ""
 
+# Process cDNA reads using pychopper, turn off for direct RNA:
+run_pychopper: True
+
 # threads (default = 30)
 threads: 30
 
