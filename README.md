@@ -1,15 +1,14 @@
-# ANNSeq - ANalysis of Nanopore SEQuencing
+# Long-read RNA seq analysis using Talon
 
 <!-- badges: start -->
-![Maintainer](https://img.shields.io/badge/maintainer-SidSethi-blue)
+![Maintainer](https://img.shields.io/badge/maintainer-egustavsson-blue)
 ![Generic badge](https://img.shields.io/badge/WMS-snakemake-blue.svg)
 ![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)
-![Linux](https://svgshare.com/i/Zhy.svg)
 ![Lifecycle:maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)
 [![GPLv3 license](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://github.com/sid-sethi/APTARS/blob/main/LICENSE)
 <!-- badges: end -->
 
-ANNSeq is a `snakemake` pipeline that takes Oxford Nanopore Sequencing (ONS) data (fastq) as input, generates fastq stats using `nanostat`, performs fastq processing and filtering using `pychopper`, map the reads to the genome using `minimap2` and uses `talon` to assemble and quantify transcripts. Below is the dag of the pipeline:  
+This is a `snakemake` pipeline that takes Oxford Nanopore Sequencing (ONT) data (fastq) as input, generates fastq stats using `nanostat`, performs fastq processing and filtering using `pychopper`, map the reads to the genome using `minimap2` and uses `talon` to assemble and quantify transcripts. It is forked from [`ANNSeq`](https://github.com/sid-sethi/ANNSeq). Below is the dag of the pipeline:  
 
 <p align="center">
   <img src="dag/dag.png" width="600" height="800"/>  
@@ -20,7 +19,7 @@ ANNSeq is a `snakemake` pipeline that takes Oxford Nanopore Sequencing (ONS) dat
 
 ## Input
 
-- ONS fastq reads
+- ONT fastq reads
 - Reference genome assembly in fasta format
 - GTF: [Gencode GTF](https://www.gencodegenes.org/human/); tested on v38 comprehensive CHR gene annotation
 
@@ -35,23 +34,23 @@ ANNSeq is a `snakemake` pipeline that takes Oxford Nanopore Sequencing (ONS) dat
 Clone the directory:
 
 ```bash
-git clone --recursive https://github.com/sid-sethi/ANNSeq.git
+git clone --recursive https://github.com/egustavsson/ONT_TALON.git
 ```
 
 Create conda environment for the pipeline which will install all the dependencies:
 
 ```bash
-cd ANNSeq
+cd ONT_TALON
 conda env create -f environment.yml
 ```
 
 ## Usage
 
-Edit `config.yml` to set up the working directory and input files/directories. `snakemake` command should be issued from within the pipeline directory. Please note that before you run any of the `snakemake` commands, make sure to first activate the conda environment using the command `conda activate annseq`.
+Edit `config.yml` to set up the working directory and input files/directories. `snakemake` command should be issued from within the pipeline directory. Please note that before you run any of the `snakemake` commands, make sure to first activate the conda environment using the command `conda activate ont_talon`.
 
 ```bash
-cd ANNSeq
-conda activate annseq
+cd ONT_TALON
+conda activate ont_talon
 snakemake --use-conda -j <num_cores> all
 ```
 It is a good idea to do a dry run (using -n parameter) to view what would be done by the pipeline before executing the pipeline.

@@ -1,13 +1,14 @@
-name: annseq
+name: ont_talon
 channels:
  - conda-forge
  - bioconda
  - defaults
+ - epi2melabs
 dependencies:
- - snakemake==5.32.2
+ - snakemake==7.18.2
  - python>3.6
- - nanostat
- - pychopper>=2.0
- - minimap2
- - samtools
- - talon
+ - nanostat==1.6
+ - pychopper==2.7.2
+ - minimap2==2.26
+ - samtools==1.17
+ - talon=v5.0
