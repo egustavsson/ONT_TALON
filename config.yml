@@ -5,13 +5,13 @@
 workdir: "/home/JHEmilGustavsson/MinaRyten/Emil/test_LoTAQ/"
 
 # prefix of all output files (optional; default = "sample")
-sample_name: ""
+sample_name: "GBA1_test"
 
 # reference genome as fasta (required)
 genome: "/home/JHEmilGustavsson/MinaRyten/Emil/references/GRCh38.primary_assembly.genome.fa"
 
 # ONT reads in fastq format
-reads_fastq: "/home/JHEmilGustavsson/MinaRyten/Emil/Human_brain_direct_cDNA/Caudate_nucleus_PAG09845/Caudate_nucleus_PAG09845_pass.fastq"
+reads_fastq: "/home/MinaRyten/Emil/zTEMP/ND00137_gba1.fastq"
 
 # Process cDNA reads using pychopper, turn off for direct RNA:
 run_pychopper: True

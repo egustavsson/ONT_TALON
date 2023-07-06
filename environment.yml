@@ -3,12 +3,12 @@ channels:
  - conda-forge
  - bioconda
  - defaults
- - epi2melabs
+ - nanoporetech
 dependencies:
  - snakemake==7.18.2
  - python>3.6
  - nanostat==1.6
- - pychopper==2.7.2
+ - nanoporetech::pychopper==2.7.6
  - minimap2==2.26
  - samtools==1.17
  - talon=v5.0
