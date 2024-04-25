@@ -34,13 +34,13 @@ This is a `snakemake` pipeline that takes Oxford Nanopore Sequencing (ONT) data 
 Clone the directory:
 
 ```bash
-git clone --recursive https://github.com/egustavsson/ONT_TALON.git
+git clone --recursive https://github.com/egustavsson/pipeline-isoforms-ONT-TALON.git
 ```
 
 Create conda environment for the pipeline which will install all the dependencies:
 
 ```bash
-cd ONT_TALON
+cd pipeline-isoforms-ONT-TALON
 conda env create -f environment.yml
 ```
 
@@ -49,7 +49,7 @@ conda env create -f environment.yml
 Edit `config.yml` to set up the working directory and input files/directories. `snakemake` command should be issued from within the pipeline directory. Please note that before you run any of the `snakemake` commands, make sure to first activate the conda environment using the command `conda activate ont_talon`.
 
 ```bash
-cd ONT_TALON
+cd pipeline-isoforms-ONT-TALON
 conda activate ont_talon
 snakemake --use-conda -j <num_cores> all
 ```
